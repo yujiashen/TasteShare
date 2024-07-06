@@ -30,8 +30,8 @@ export default function Index() {
           console.log('setupDatabaseTable');
           await loadDataIntoDatabase(db, tableName);
           console.log('loadDataIntoDatabase');
-          await db.closeAsync(); // Disconnect from the database
-          console.log('CLOSED');
+          // await db.closeAsync(); // Disconnect from the database
+          // console.log('CLOSED');
           // add a line to disconnect from the databaase
         }
       } catch (error) {

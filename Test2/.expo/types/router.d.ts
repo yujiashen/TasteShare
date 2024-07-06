@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import type { TextProps, GestureResponderEvent } from 'react-native';
 
 export namespace ExpoRouter {
-  type StaticRoutes = `/` | `/(app)` | `/(auth)/sign-in` | `/(auth)/sign-up` | `/(feed)` | `/(post)` | `/(profile)/` | `/(profile)/(profile_private)` | `/(profile)/(profile_self)` | `/(profile)/(profile_viewable)` | `/(profile_private)` | `/(profile_self)` | `/(profile_viewable)` | `/(user)` | `/_sitemap` | `/add_like` | `/modal` | `/seeAll` | `/sign-in` | `/sign-up`;
+  type StaticRoutes = `/` | `/(app)` | `/(auth)/sign-in` | `/(auth)/sign-up` | `/(feed)` | `/(post)` | `/(profile)/` | `/(profile)/(profile_private)` | `/(profile)/(profile_self)` | `/(profile)/(profile_viewable)` | `/(profile_private)` | `/(profile_self)` | `/(profile_viewable)` | `/(user)` | `/_sitemap` | `/add_like` | `/modal` | `/seeAll` | `/sign-in` | `/sign-up` | `/test_add_like`;
   type DynamicRoutes<T extends string> = `/${SingleRoutePart<T>}`;
   type DynamicRouteTemplate = `/[id]`;
 
