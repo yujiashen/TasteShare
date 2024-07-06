@@ -5,7 +5,6 @@ import StarRating from 'react-native-star-rating-widget';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { connectToDatabase, searchMoviesInDatabase } from '@database/dbConnect';
 
-
 export const submitRef = React.createRef<() => void>();
 
 const AddLikeScreen = () => {
@@ -94,22 +93,6 @@ const AddLikeScreen = () => {
 
   submitRef.current = handleSubmit;
 
-  const closeDropdowns = (dropdownType: string) => {
-    if (dropdownType === 'category') {
-      console.log('Category dropdown change');
-      // setCategoryOpen(true);
-      // setContentOpen(false);
-    } else if (dropdownType === 'content') {
-      console.log('Content dropdown change');
-      // setCategoryOpen(false);
-      // setContentOpen(true);
-    } else {
-      // setCategoryOpen(false);
-      // setContentOpen(false);
-    }
-    Keyboard.dismiss();
-  };
-
   const fetchPosterPath = async (tconst) => {
     try {
       const response = await fetch(`http://localhost:3000/api/tmdbApi/poster/${tconst}`);
@@ -126,17 +109,17 @@ const AddLikeScreen = () => {
       return null;
     }
   };
-  
+
   const onContentChange = async (text: string) => {
     setContent(text);
     if ((category === 'Movie' || category === 'Show') && db) {
       try {
         const results = await searchMoviesInDatabase(db, text);
-        setMovieResults(results.map(item => ({ 
-          label: `${item.primaryTitle} (${item.startYear})`, 
+        setMovieResults(results.map(item => ({
+          label: `${item.primaryTitle} (${item.startYear})`,
           value: item.tconst, // Store tconst for fetching poster
           yearStyle: styles.movieYear,
-        })));      
+        })));
       } catch (error) {
         console.error('Error searching movies:', error);
       }
@@ -146,13 +129,19 @@ const AddLikeScreen = () => {
 
   const handleContentSelect = async (tconst) => {
     setContent(tconst);
-    console.log('Handling Content Select: ',tconst);
+    console.log('Handling Content Select: ', tconst);
     const posterPath = await fetchPosterPath(tconst);
     setImageUri(posterPath);
   };
 
+  const closeDropdowns = () => {
+    setCategoryOpen(false);
+    setContentOpen(false);
+    Keyboard.dismiss();
+  };
+
   const renderForm = () => (
-    <TouchableWithoutFeedback onPress={() => closeDropdowns('category')}>
+    <TouchableWithoutFeedback onPress={closeDropdowns}>
       <View style={styles.formContainer}>
         <View style={[styles.row, { zIndex: 2000 }]}>
           <Text style={styles.label}>Category</Text>
@@ -160,11 +149,20 @@ const AddLikeScreen = () => {
             open={categoryOpen}
             value={category}
             items={categories}
-            setOpen={setCategoryOpen}
+            setOpen={(open) => {
+              setCategoryOpen(open);
+              if (open) {
+                setContentOpen(false);
+              }
+            }}
             placeholder='Select a category'
             setValue={(callback) => {
               setCategory(callback());
-              if (callback) setErrors((prev) => ({ ...prev, category: false }));
+              if (callback) {
+                setErrors((prev) => ({ ...prev, category: false }));
+                setContent('');
+                setImageUri(null);
+              }
             }}
             setItems={setCategories}
             style={[
@@ -177,20 +175,28 @@ const AddLikeScreen = () => {
           />
         </View>
 
-        <TouchableWithoutFeedback onPress={() => closeDropdowns('content')}>
+        <TouchableWithoutFeedback onPress={closeDropdowns}>
           <View style={{ marginBottom: 16, zIndex: 1000 }}>
             <Text style={styles.label}>Content</Text>
             <DropDownPicker
               open={contentOpen}
               value={content}
               items={movieResults}
-              setOpen={setContentOpen}
+              setOpen={(open) => {
+                setContentOpen(open);
+                if (open) {
+                  setCategoryOpen(false);
+                }
+              }}
               placeholder="What did you watch?"
               searchable={true}
               searchPlaceholder="What did you watch?"
               onChangeSearchText={onContentChange}
               setValue={(callback) => {
-                handleContentSelect(callback());
+                console.log('Setting value');
+                const value = callback();
+                setContent(value);
+                handleContentSelect(value);
                 if (callback) setErrors((prev) => ({ ...prev, content: false }));
               }}
               style={[
@@ -202,11 +208,17 @@ const AddLikeScreen = () => {
               textStyle={styles.dropdownText}
               listMode="SCROLLVIEW"
               renderListItem={({ item }) => (
-                <TouchableOpacity style={styles.listItem} onPress={() => handleContentSelect(item.value)}>
-                  <Text numberOfLines={2} style={styles.listItemText}>
-                    {item.label}
-                  </Text>
-                </TouchableOpacity>
+                <TouchableOpacity 
+                style={styles.listItem} 
+                onPress={() => {
+                  handleContentSelect(item.value);
+                  setContentOpen(false); // Close the dropdown after selecting an item
+                }}
+              >
+                <Text numberOfLines={2} style={styles.listItemText}>
+                  {item.label}
+                </Text>
+              </TouchableOpacity>
               )}
             />
           </View>

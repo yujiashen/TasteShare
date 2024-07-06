@@ -5,6 +5,7 @@ import StarRating from 'react-native-star-rating-widget';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { connectToDatabase, searchMoviesInDatabase } from '@database/dbConnect';
 
+
 export const submitRef = React.createRef<() => void>();
 
 const AddLikeScreen = () => {
@@ -93,38 +94,71 @@ const AddLikeScreen = () => {
 
   submitRef.current = handleSubmit;
 
-  const closeDropdowns = (dropdownType: string) => {
-    if (dropdownType === 'category') {
-      setCategoryOpen(true);
-      setContentOpen(false);
-    } else if (dropdownType === 'content') {
-      setCategoryOpen(false);
-      setContentOpen(true);
-    } else {
-      setCategoryOpen(false);
-      setContentOpen(false);
-    }
-    Keyboard.dismiss();
-  };
+//   const closeDropdowns = (dropdownType: string) => {
+//     if (dropdownType === 'category') {
+//       console.log('Category dropdown change');
+//       // setCategoryOpen(true);
+//       // setContentOpen(false);
+//     } else if (dropdownType === 'content') {
+//       console.log('Content dropdown change');
+//       // setCategoryOpen(false);
+//       // setContentOpen(true);
+//     } else {
+//       setCategoryOpen(false);
+//       setContentOpen(false);
+//     }
+//     Keyboard.dismiss();
+//   };
 
+  const fetchPosterPath = async (tconst) => {
+    try {
+      const response = await fetch(`http://localhost:3000/api/tmdbApi/poster/${tconst}`);
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.statusText}`);
+      }
+      const data = await response.json();
+      if (!data.posterPath) {
+        throw new Error('Poster path not found in response');
+      }
+      return `https://image.tmdb.org/t/p/w500${data.posterPath}`;
+    } catch (error) {
+      console.error('Error fetching poster path:', [error]);
+      return null;
+    }
+  };
+  
   const onContentChange = async (text: string) => {
     setContent(text);
-    if (category === 'Movie' && db) {
+    if ((category === 'Movie' || category === 'Show') && db) {
       try {
         const results = await searchMoviesInDatabase(db, text);
         setMovieResults(results.map(item => ({ 
           label: `${item.primaryTitle} (${item.startYear})`, 
-          value: item.primaryTitle,
-          yearStyle: styles.movieYear, // add this line
-        })));      } catch (error) {
+          value: item.tconst, // Store tconst for fetching poster
+          yearStyle: styles.movieYear,
+        })));      
+      } catch (error) {
         console.error('Error searching movies:', error);
       }
     }
     if (text) setErrors((prev) => ({ ...prev, content: false }));
   };
 
+  const handleContentSelect = async (tconst) => {
+    setContent(tconst);
+    console.log('Handling Content Select: ',tconst);
+    const posterPath = await fetchPosterPath(tconst);
+    setImageUri(posterPath);
+  };
+
+  const closeDropdowns = () => {
+    setCategoryOpen(false);
+    setContentOpen(false);
+    Keyboard.dismiss();
+  };
+
   const renderForm = () => (
-<TouchableWithoutFeedback onPress={() => closeDropdowns('category')}>
+    <TouchableWithoutFeedback onPress={() => closeDropdowns('category')}>
       <View style={styles.formContainer}>
         <View style={[styles.row, { zIndex: 2000 }]}>
           <Text style={styles.label}>Category</Text>
@@ -132,8 +166,10 @@ const AddLikeScreen = () => {
             open={categoryOpen}
             value={category}
             items={categories}
-            setOpen={setCategoryOpen}
-            placeholder='Select a category'
+            setOpen={(open) => {
+                setCategoryOpen(open);
+                if (open) setContentOpen(false);
+              }}            placeholder='Select a category'
             setValue={(callback) => {
               setCategory(callback());
               if (callback) setErrors((prev) => ({ ...prev, category: false }));
@@ -149,45 +185,50 @@ const AddLikeScreen = () => {
           />
         </View>
 
-      <TouchableWithoutFeedback onPress={() => closeDropdowns('content')}>
-        <View style={{ marginBottom: 16, zIndex: 1000 }}>
-        <Text style={styles.label}>Content</Text>
-      <DropDownPicker
-        open={contentOpen}
-        value={content}
-        items={movieResults}
-        setOpen={setContentOpen}
-        placeholder="What did you watch?"
-        searchable={true}
-        searchPlaceholder="What did you watch?"
-        onChangeSearchText={onContentChange}
-        setValue={(callback) => {
-          setContent(callback());
-          if (callback) setErrors((prev) => ({ ...prev, content: false }));
-        }}
-        style={[
-          styles.dropdown,
-          errors.content && styles.errorBorder,
-        ]}
-            containerStyle={[styles.dropdownContainer, { zIndex: 3000 }]}
-            dropDownContainerStyle={[styles.dropdownList, { zIndex: 3000 }]} // Ensure dropdown is above other elements
-            textStyle={styles.dropdownText}
-            listMode="SCROLLVIEW"
-            renderListItem={({ item }) => (
-              <TouchableOpacity style={styles.listItem} onPress={() => setContent(item.value)}>
-                <Text numberOfLines={2} style={styles.listItemText}>
-                  {item.label}
-                </Text>
-              </TouchableOpacity>
-            )}
-          />
-        </View>
-      </TouchableWithoutFeedback>
+        <TouchableWithoutFeedback onPress={() => closeDropdowns('content')}>
+          <View style={{ marginBottom: 16, zIndex: 1000 }}>
+            <Text style={styles.label}>Content</Text>
+            <DropDownPicker
+              open={contentOpen}
+              value={content}
+              items={movieResults}
+              setOpen={(open) => {
+                setContentOpen(open);
+                if (open) setCategoryOpen(false);
+              }}              placeholder="What did you watch?"
+              searchable={true}
+              searchPlaceholder="What did you watch?"
+              onChangeSearchText={onContentChange}
+              setValue={(callback) => {
+                handleContentSelect(callback());
+                if (callback) setErrors((prev) => ({ ...prev, content: false }));
+              }}
+              style={[
+                styles.dropdown,
+                errors.content && styles.errorBorder,
+              ]}
+              containerStyle={[styles.dropdownContainer, { zIndex: 3000 }]}
+              dropDownContainerStyle={[styles.dropdownList, { zIndex: 3000 }]} // Ensure dropdown is above other elements
+              textStyle={styles.dropdownText}
+              listMode="SCROLLVIEW"
+              renderListItem={({ item }) => (
+                <TouchableOpacity style={styles.listItem} onPress={() => handleContentSelect(item.value)}>
+                  <Text numberOfLines={2} style={styles.listItemText}>
+                    {item.label}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        </TouchableWithoutFeedback>
 
-        <TouchableOpacity style={styles.button} onPress={handleImagePick}>
-          <Text style={styles.buttonText}>Pick an Image</Text>
-        </TouchableOpacity>
-        {imageUri && <Image source={{ uri: imageUri }} style={styles.image} />}
+        {imageUri ? (
+          <Image source={{ uri: imageUri }} style={styles.posterImage} />
+        ) : (
+          <TouchableOpacity style={styles.button} onPress={handleImagePick}>
+            <Text style={styles.buttonText}>Pick an Image</Text>
+          </TouchableOpacity>
+        )}
 
         <View style={styles.row}>
           <Text style={styles.label}>Rating</Text>
@@ -301,6 +342,13 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     borderRadius: 10,
   },
+  posterImage: {
+    width: '100%',
+    height: 300,
+    marginTop: 16,
+    marginBottom: 16,
+    resizeMode: 'contain',
+  },
   button: {
     backgroundColor: '#007bff',
     padding: 10,
@@ -362,4 +410,3 @@ const styles = StyleSheet.create({
 });
 
 export default AddLikeScreen;
-

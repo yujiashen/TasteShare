@@ -1,5 +1,6 @@
 {
   "name": "test2",
+  "type":"module",
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
@@ -9,7 +10,6 @@
     "web": "expo start --web",
     "test": "jest --watchAll"
   },
-  "type":"module",
   "jest": {
     "preset": "jest-expo"
   },
