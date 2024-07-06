@@ -1,14 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ScrollView, FlatList, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
+import { useLocalSearchParams } from 'expo-router';
 import StarRating from 'react-native-star-rating-widget';
-import { launchImageLibrary } from 'react-native-image-picker';
 import { connectToDatabase, searchMoviesInDatabase } from '@database/dbConnect';
+import { useAuth } from '@/providers/AuthProvider';
 
 export const submitRef = React.createRef<() => void>();
 
 const AddLikeScreen = () => {
+  // const { username } = useLocalSearchParams();
+  const { user, isAuthenticated, signIn, signOut } = useAuth();
+  const username = user.username;
+
   const [content, setContent] = useState('');
+  const [title, setTitle] = useState('');
+  const [contentYear, setContentYear] = useState('');
   const [category, setCategory] = useState('');
   const [review, setReview] = useState('');
   const [rating, setRating] = useState(0);
@@ -43,15 +50,15 @@ const AddLikeScreen = () => {
     initializeDatabase();
   }, []);
 
-  const handleImagePick = () => {
-    launchImageLibrary({ mediaType: 'photo' }, (response) => {
-      if (response.assets && response.assets.length > 0) {
-        setImageUri(response.assets[0].uri);
-      }
-    });
-  };
+  // const handleImagePick = () => {
+  //   launchImageLibrary({ mediaType: 'photo' }, (response) => {
+  //     if (response.assets && response.assets.length > 0) {
+  //       setImageUri(response.assets[0].uri);
+  //     }
+  //   });
+  // };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const newErrors = {
       category: !category,
       content: !content,
@@ -67,7 +74,10 @@ const AddLikeScreen = () => {
 
     const timestamp = new Date().toISOString();
     const newLike = {
+      username,
+      title,
       content,
+      contentYear,
       category,
       review,
       rating,
@@ -76,7 +86,6 @@ const AddLikeScreen = () => {
     };
     console.log(newLike);
     // Save the newLike object to your backend or state management solution
-
     // Clear the form and errors
     setContent('');
     setCategory('');
@@ -89,6 +98,24 @@ const AddLikeScreen = () => {
       review: false,
       rating: false,
     });
+  
+    try {
+      const response = await fetch('http://localhost:3000/submit_post', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newLike),
+      });
+  
+      if (response.ok) {
+        console.log('Data submitted successfully');
+      } else {
+        console.error('Failed to submit data',response);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
   };
 
   submitRef.current = handleSubmit;
@@ -117,8 +144,7 @@ const AddLikeScreen = () => {
         const results = await searchMoviesInDatabase(db, text);
         setMovieResults(results.map(item => ({
           label: `${item.primaryTitle} (${item.startYear})`,
-          value: item.tconst, // Store tconst for fetching poster
-          yearStyle: styles.movieYear,
+          value: [item.tconst,item.primaryTitle,item.startYear] // Store tconst for fetching poster
         })));
       } catch (error) {
         console.error('Error searching movies:', error);
@@ -127,8 +153,10 @@ const AddLikeScreen = () => {
     if (text) setErrors((prev) => ({ ...prev, content: false }));
   };
 
-  const handleContentSelect = async (tconst) => {
+  const handleContentSelect = async ([tconst, title, contentYear]) => {
     setContent(tconst);
+    setTitle(title);
+    setContentYear(contentYear);
     console.log('Handling Content Select: ', tconst);
     const posterPath = await fetchPosterPath(tconst);
     setImageUri(posterPath);
@@ -157,11 +185,15 @@ const AddLikeScreen = () => {
             }}
             placeholder='Select a category'
             setValue={(callback) => {
-              setCategory(callback());
-              if (callback) {
+              const value = callback();
+              setCategory(value);
+              setContent('');
+              setTitle('');
+              setContentYear(null);
+              setImageUri(null);
+              setMovieResults([]); // Clear the movie results
+              if (value) {
                 setErrors((prev) => ({ ...prev, category: false }));
-                setContent('');
-                setImageUri(null);
               }
             }}
             setItems={setCategories}
@@ -174,7 +206,7 @@ const AddLikeScreen = () => {
             textStyle={styles.dropdownText}
           />
         </View>
-
+  
         <TouchableWithoutFeedback onPress={closeDropdowns}>
           <View style={{ marginBottom: 16, zIndex: 1000 }}>
             <Text style={styles.label}>Content</Text>
@@ -188,15 +220,16 @@ const AddLikeScreen = () => {
                   setCategoryOpen(false);
                 }
               }}
-              placeholder="What did you watch?"
+              placeholder={category === 'Movie' || category === 'Show' ? 'What did you watch?' : category === 'Book' ? 'What did you read?' : 'What did you listen to?'}
               searchable={true}
-              searchPlaceholder="What did you watch?"
+              searchPlaceholder="Search..."
               onChangeSearchText={onContentChange}
               setValue={(callback) => {
-                console.log('Setting value');
-                const value = callback();
+                const [value,title,contentYear] = callback();
                 setContent(value);
-                handleContentSelect(value);
+                handleContentSelect(title);
+                setContentYear(contentYear); // Store the content year()
+                setContentOpen(false); // Close the dropdown after selecting an item
                 if (callback) setErrors((prev) => ({ ...prev, content: false }));
               }}
               style={[
@@ -209,29 +242,30 @@ const AddLikeScreen = () => {
               listMode="SCROLLVIEW"
               renderListItem={({ item }) => (
                 <TouchableOpacity 
-                style={styles.listItem} 
-                onPress={() => {
-                  handleContentSelect(item.value);
-                  setContentOpen(false); // Close the dropdown after selecting an item
-                }}
-              >
-                <Text numberOfLines={2} style={styles.listItemText}>
-                  {item.label}
-                </Text>
-              </TouchableOpacity>
+                  style={styles.listItem} 
+                  onPress={() => {
+                    handleContentSelect(item.value);
+                    setContentOpen(false); // Close the dropdown after selecting an item
+                  }}
+                >
+                  <Text numberOfLines={2} style={styles.listItemText}>
+                    {item.label}
+                  </Text>
+                </TouchableOpacity>
               )}
             />
           </View>
         </TouchableWithoutFeedback>
-
+  
         {imageUri ? (
           <Image source={{ uri: imageUri }} style={styles.posterImage} />
         ) : (
-          <TouchableOpacity style={styles.button} onPress={handleImagePick}>
+          // <TouchableOpacity style={styles.button} onPress={handleImagePick}>
+          <TouchableOpacity style={styles.button} >
             <Text style={styles.buttonText}>Pick an Image</Text>
           </TouchableOpacity>
         )}
-
+  
         <View style={styles.row}>
           <Text style={styles.label}>Rating</Text>
           <View style={[styles.ratingContainer, errors.rating && styles.errorBorder]}>
@@ -246,7 +280,7 @@ const AddLikeScreen = () => {
             />
           </View>
         </View>
-
+  
         <Text style={styles.label}>Review</Text>
         <TextInput
           style={[styles.input, styles.textArea, errors.review && styles.errorBorder]}
@@ -264,6 +298,7 @@ const AddLikeScreen = () => {
       </View>
     </TouchableWithoutFeedback>
   );
+  
 
   return (
     <FlatList
@@ -359,16 +394,6 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   buttonText: {
-    color: '#fff',
-    fontSize: 16,
-  },
-  submitButton: {
-    backgroundColor: '#28a745',
-    padding: 10,
-    borderRadius: 5,
-    alignItems: 'center',
-  },
-  submitButtonText: {
     color: '#fff',
     fontSize: 16,
   },

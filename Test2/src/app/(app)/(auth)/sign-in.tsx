@@ -69,16 +69,3 @@ const styles = StyleSheet.create({
 });
 
 export default Login;
-
-// import db from '@database/dbConnect';
-// import { setupDatabase, loadData } from '@database/dbSetup';
-
-// const tableName = 'movies_shows';
-// const dataFilePath = '@assets/data/movies_shows_top50k.json';
-
-// (async () => {
-//     await setupDatabase(db, tableName);
-//     console.log('Set up',db);
-//     await loadData(db, tableName, dataFilePath);
-//     console.log('Loaded');
-// })();

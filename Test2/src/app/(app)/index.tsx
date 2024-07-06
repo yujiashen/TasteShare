@@ -2,8 +2,9 @@ import { useRouter } from 'expo-router';
 import { useNavigation } from '@react-navigation/native';
 import { useEffect, useState } from 'react';
 import { connectToDatabase, setupDatabaseTable, loadDataIntoDatabase } from '@database/dbConnect';
+import { AuthProvider } from '@/providers/AuthProvider'; // Adjust the import path as needed
 
-export default function Index() {
+function Index() {
   const router = useRouter();
   const navigation = useNavigation();
   const tableName = 'moviesShows';
@@ -21,7 +22,7 @@ export default function Index() {
         const { db, connected } = await connectToDatabase();
         // setDb(db);
         if (connected) {
-          console.log('DB CONNECTED?',db);
+          console.log('DB CONNECTED?', db);
           await setupDatabaseTable(db, tableName);
           console.log('setupDatabaseTable');
           await loadDataIntoDatabase(db, tableName);
@@ -36,7 +37,7 @@ export default function Index() {
     };
 
     connectAndSetupDatabase();
-    }, [router, navigation]);
+  }, [router, navigation]);
 
   //   // Load data into the database after successful setup
   //   const loadDataIntoDatabaseInBackground = async () => {
@@ -57,3 +58,10 @@ export default function Index() {
   // return <Text>Loading...</Text>;
 }
 
+export default function App() {
+  return (
+    <AuthProvider>
+      <Index />
+    </AuthProvider>
+  );
+}

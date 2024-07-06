@@ -1,6 +1,7 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const { fetchPosterPath } = require('./api/tmdbApi');
+const { insertPostData, verifyConnection } = require('./database/db');
 
 dotenv.config();
 
@@ -9,7 +10,6 @@ const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 
-// Endpoint to fetch the poster path for a specific movie/show by its tconst
 app.get('/api/tmdbApi/poster/:tconst', async (req, res) => {
   const { tconst } = req.params;
   try {
@@ -21,6 +21,21 @@ app.get('/api/tmdbApi/poster/:tconst', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+app.post('/submit_post', async (req, res) => {
+  try {
+    await insertPostData(req.body);
+    res.status(200).send('Data inserted successfully');
+  } catch (err) {
+    res.status(500).send('Server error');
+  }
 });
+
+// Verify connection and list tables on server start
+verifyConnection().then(() => {
+  app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+  });
+}).catch(err => {
+  console.error('Failed to verify database connection:', err);
+});
+
