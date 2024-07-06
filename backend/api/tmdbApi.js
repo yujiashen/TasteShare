@@ -21,7 +21,15 @@ const fetchPosterPath = async (tconst) => {
       throw new Error('Network response was not ok');
     }
     const data = await response.json();
-    const posterPath = data.movie_results.length > 0 ? data.movie_results[0].poster_path : null;
+
+    let posterPath = null;
+
+    if (data.movie_results.length > 0) {
+      posterPath = data.movie_results[0].poster_path;
+    } else if (data.tv_results.length > 0) {
+      posterPath = data.tv_results[0].poster_path;
+    }
+
     return posterPath ? `https://image.tmdb.org/t/p/w500${posterPath}` : null;
   } catch (error) {
     console.error('Failed to fetch poster path:', error);

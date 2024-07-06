@@ -10,12 +10,13 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 
 // Endpoint to fetch the poster path for a specific movie/show by its tconst
-app.get('/api/poster/:tconst', async (req, res) => {
+app.get('/api/tmdbApi/poster/:tconst', async (req, res) => {
   const { tconst } = req.params;
   try {
     const posterPath = await fetchPosterPath(tconst);
     res.json({ posterPath });
   } catch (error) {
+    console.error('Error fetching poster path:', error);
     res.status(500).json({ error: 'Failed to fetch poster path' });
   }
 });

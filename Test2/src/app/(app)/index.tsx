@@ -2,10 +2,8 @@ import { useRouter } from 'expo-router';
 import { useNavigation } from '@react-navigation/native';
 import { useEffect, useState } from 'react';
 import { connectToDatabase, setupDatabaseTable, loadDataIntoDatabase } from '@database/dbConnect';
-console.log('Before INDEX');
 
 export default function Index() {
-  console.log('Right after INDEX');
   const router = useRouter();
   const navigation = useNavigation();
   const tableName = 'moviesShows';
@@ -13,12 +11,10 @@ export default function Index() {
   const [db, setDb] = useState(null);
 
   useEffect(() => {
-    console.log('In useEffect');
     // REROUTED
     navigation.setOptions({ headerShown: false });
     router.replace('/(auth)/sign-in');
     //
-    console.log('After routing');
 
     const connectAndSetupDatabase = async () => {
       try {
@@ -41,7 +37,6 @@ export default function Index() {
 
     connectAndSetupDatabase();
     }, [router, navigation]);
-    console.log('Shoud start connecting now');
 
   //   // Load data into the database after successful setup
   //   const loadDataIntoDatabaseInBackground = async () => {

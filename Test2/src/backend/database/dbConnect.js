@@ -92,7 +92,7 @@ export async function loadDataIntoDatabase(database, tableName) {
 
 export async function searchMoviesInDatabase(database, query) {
   const selectQuery = `
-    SELECT primaryTitle, startYear
+    SELECT tconst, primaryTitle, startYear
     FROM movies_shows
     WHERE primaryTitle LIKE ?
     ORDER BY numVotes DESC
