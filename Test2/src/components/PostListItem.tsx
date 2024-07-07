@@ -30,6 +30,7 @@ type PostListItemProps = {
 };
 
 const PostListItem = ({ post }: PostListItemProps) => {
+  // console.log('IN Post LIST ITEM!!!');
   const segments = useSegments();
   const router = useRouter();
   const [isCommentsModalVisible, setCommentsModalVisible] = useState(false);

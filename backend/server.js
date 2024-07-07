@@ -75,7 +75,7 @@ app.get('/user/:username/followed_posts', async (req, res) => {
     // Step 2: Fetch posts from MongoDB from the followed users (including the user's own posts)
     const followedUsernames = following.map(user => user.target_username).concat(req.params.username);
     const posts = await getFilteredPosts({ username: { $in: followedUsernames } });
-
+    console.log('Filtered posts:', posts);
     res.status(200).json(posts);
   } catch (error) {
     res.status(500).json({ error: error.message });

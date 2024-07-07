@@ -2,7 +2,9 @@ import React, { createContext, useContext, useState } from 'react';
 
 const PostsContext = createContext();
 
-export const usePosts = () => useContext(PostsContext);
+export const usePosts = () => {
+  return useContext(PostsContext);
+};
 
 export const PostsProvider = ({ children }) => {
   const [posts, setPosts] = useState([]);
@@ -20,8 +22,12 @@ export const PostsProvider = ({ children }) => {
     }
   };
 
+  const addPost = (newPost) => {
+    setPosts((prevPosts) => [newPost, ...prevPosts]);
+  };
+
   return (
-    <PostsContext.Provider value={{ posts, setPosts, fetchPosts }}>
+    <PostsContext.Provider value={{ posts, setPosts, fetchPosts, addPost }}>
       {children}
     </PostsContext.Provider>
   );

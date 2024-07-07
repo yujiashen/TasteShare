@@ -1,18 +1,42 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { FlatList, Text, View, StyleSheet } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import PostListItem from '@/components/PostListItem';
 import { useAuth } from '@/providers/AuthProvider';
-import { usePosts, PostsProvider } from '@/providers/PostsProvider';
 
 const UserFeedScreen = () => {
-  const { username } = useLocalSearchParams();
-  const { user: authUser } = useAuth(); 
-  const { posts, fetchPosts } = usePosts();
+  console.log('Rendering UserFeedScreen');
+  const { username, timestamp } = useLocalSearchParams();
+  const { user: authUser } = useAuth();
+  const [posts, setPosts] = useState([]);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetchPosts(username);
-  }, [username]);
+    console.log('In useEffect', username, timestamp);
+    const fetchPosts = async () => {
+      try {
+        console.log('in fetch posts try')
+        const response = await fetch(`http://localhost:3000/user/${username}/followed_posts`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch posts');
+        }
+        const data = await response.json();
+        setPosts(data);
+      } catch (err) {
+        setError(err.message);
+      }
+    };
+
+    fetchPosts();
+  }, [username, timestamp]);
+
+  if (error) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.errorText}>{error}</Text>
+      </View>
+    );
+  }
 
   if (posts.length === 0) {
     return (
@@ -59,8 +83,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default () => (
-  <PostsProvider>
-    <UserFeedScreen />
-  </PostsProvider>
-);
+export default UserFeedScreen;

@@ -12,7 +12,7 @@ export const submitRef = React.createRef<() => void>();
 const AddLikeScreen = () => {
   const router = useRouter();
   const { user, isAuthenticated, signIn, signOut } = useAuth();
-  const { fetchPosts } = usePosts();
+  const { fetchPosts, addPost } = usePosts();
   const username = user.username;
 
   const [content, setContent] = useState('');
@@ -104,8 +104,10 @@ const AddLikeScreen = () => {
   
       if (response.ok) {
         console.log('Data submitted successfully');
-        fetchPosts(username);
-        router.push({ pathname: '/(user)/(feed)/index', params: { username } });
+        // fetchPosts(username);
+        const postData = await response.json();
+        addPost(postData);
+        router.push({ pathname: '/(user)/(feed)/index', params: { username, timestamp: Date.now() } });
       } else {
         console.error('Failed to submit data', response);
       }
