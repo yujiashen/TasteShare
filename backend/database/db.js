@@ -11,6 +11,16 @@ const pool = new Pool({
   port: process.env.DB_PORT,
 });
 
+const connectToDatabase = async () => {
+  try {
+    await pool.connect();
+    console.log('Connected to PostgreSQL database');
+  } catch (err) {
+    console.error('Error connecting to PostgreSQL database:', err);
+    throw err;
+  }
+};
+
 const verifyConnection = async () => {
   try {
     // Verify current database
@@ -30,32 +40,7 @@ const verifyConnection = async () => {
   }
 };
 
-const insertPostData = async (data) => {
-  const { category, content, imageUri, rating, review, timestamp, username } = data;
-
-  const { tables } = await verifyConnection(); // Call verifyConnection here
-
-  if (!tables.includes('posts')) {
-    console.error('Table "posts" does not exist in the database');
-    throw new Error('Table "posts" does not exist in the database');
-  }
-
-  const query = `
-    INSERT INTO posts (category, content, imageUri, rating, review, timestamp, username)
-    VALUES ($1, $2, $3, $4, $5, $6, $7)
-  `;
-  const values = [category, content, imageUri, rating, review, timestamp, username];
-  
-  try {
-    await pool.query(query, values);
-    console.log('Data inserted successfully');
-  } catch (err) {
-    console.error('Error inserting data:', err);
-    throw err;
-  }
-};
-
 module.exports = {
-  insertPostData,
+  connectToDatabase,
   verifyConnection,
 };

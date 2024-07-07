@@ -2,7 +2,8 @@ import { useRouter } from 'expo-router';
 import { useNavigation } from '@react-navigation/native';
 import { useEffect, useState } from 'react';
 import { connectToDatabase, setupDatabaseTable, loadDataIntoDatabase } from '@database/dbConnect';
-import { AuthProvider } from '@/providers/AuthProvider'; // Adjust the import path as needed
+import { AuthProvider } from '@/providers/AuthProvider'; 
+
 
 function Index() {
   const router = useRouter();
@@ -61,7 +62,7 @@ function Index() {
 export default function App() {
   return (
     <AuthProvider>
-      <Index />
+        <Index />
     </AuthProvider>
   );
 }

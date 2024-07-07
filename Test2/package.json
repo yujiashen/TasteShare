@@ -1,6 +1,6 @@
 {
   "name": "test2",
-  "type":"module",
+  "type": "module",
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
@@ -43,6 +43,7 @@
     "react-native-screens": "3.31.1",
     "react-native-star-rating-widget": "^1.8.0",
     "react-native-svg": "^15.3.0",
+    "react-native-toast-message": "^2.2.0",
     "react-native-web": "~0.19.10",
     "react-navigation-stack": "^2.10.4"
   },

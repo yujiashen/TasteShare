@@ -1,5 +1,5 @@
 import { Stack } from 'expo-router';
-import { Button } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { submitRef } from './add_like'; // adjust the import path as needed
 
 export default function CreateStack() {
@@ -10,18 +10,34 @@ export default function CreateStack() {
         options={{ 
           title: 'Create',
           headerRight: () => (
-            <Button
+            <TouchableOpacity
               onPress={() => {
                 if (submitRef.current) {
                   submitRef.current();
                 }
               }}
-              title="Submit"
-              color="#000"
-            />
+              style={styles.submitButton}
+            >
+              <Text style={styles.submitButtonText}>Submit</Text>
+            </TouchableOpacity>
           ),
         }} 
       />
     </Stack>
   );
 }
+
+const styles = StyleSheet.create({
+  submitButton: {
+    backgroundColor: '#007bff',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 5,
+    marginRight: 10,
+  },
+  submitButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+});

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ScrollView, FlatList, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
-import { useLocalSearchParams } from 'expo-router';
+import { useRouter } from 'expo-router';
 import StarRating from 'react-native-star-rating-widget';
 import { connectToDatabase, searchMoviesInDatabase } from '@database/dbConnect';
 import { useAuth } from '@/providers/AuthProvider';
@@ -9,7 +9,7 @@ import { useAuth } from '@/providers/AuthProvider';
 export const submitRef = React.createRef<() => void>();
 
 const AddLikeScreen = () => {
-  // const { username } = useLocalSearchParams();
+  const router = useRouter();
   const { user, isAuthenticated, signIn, signOut } = useAuth();
   const username = user.username;
 
@@ -49,14 +49,6 @@ const AddLikeScreen = () => {
 
     initializeDatabase();
   }, []);
-
-  // const handleImagePick = () => {
-  //   launchImageLibrary({ mediaType: 'photo' }, (response) => {
-  //     if (response.assets && response.assets.length > 0) {
-  //       setImageUri(response.assets[0].uri);
-  //     }
-  //   });
-  // };
 
   const handleSubmit = async () => {
     const newErrors = {
@@ -110,6 +102,7 @@ const AddLikeScreen = () => {
   
       if (response.ok) {
         console.log('Data submitted successfully');
+        router.push({ pathname: '/(user)/(feed)/index', params: { username } });
       } else {
         console.error('Failed to submit data',response);
       }
@@ -122,7 +115,7 @@ const AddLikeScreen = () => {
 
   const fetchPosterPath = async (tconst) => {
     try {
-      const response = await fetch(`http://localhost:3000/api/tmdbApi/poster/${tconst}`);
+      const response = await fetch(`http://localhost:3000//poster/${tconst}`);
       if (!response.ok) {
         throw new Error(`Server error: ${response.statusText}`);
       }
@@ -157,7 +150,6 @@ const AddLikeScreen = () => {
     setContent(tconst);
     setTitle(title);
     setContentYear(contentYear);
-    console.log('Handling Content Select: ', tconst);
     const posterPath = await fetchPosterPath(tconst);
     setImageUri(posterPath);
   };

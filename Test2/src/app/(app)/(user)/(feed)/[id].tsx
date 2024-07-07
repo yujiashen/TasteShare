@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { FlatList, Text, View, StyleSheet } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import profiles from '@assets/data/profiles';
