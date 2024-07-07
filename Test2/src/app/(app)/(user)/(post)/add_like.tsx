@@ -5,12 +5,14 @@ import { useRouter } from 'expo-router';
 import StarRating from 'react-native-star-rating-widget';
 import { connectToDatabase, searchMoviesInDatabase } from '@database/dbConnect';
 import { useAuth } from '@/providers/AuthProvider';
+import { usePosts } from '@/providers/PostsProvider';
 
 export const submitRef = React.createRef<() => void>();
 
 const AddLikeScreen = () => {
   const router = useRouter();
   const { user, isAuthenticated, signIn, signOut } = useAuth();
+  const { fetchPosts } = usePosts();
   const username = user.username;
 
   const [content, setContent] = useState('');
@@ -77,7 +79,7 @@ const AddLikeScreen = () => {
       timestamp,
     };
     console.log(newLike);
-    // Save the newLike object to your backend or state management solution
+
     // Clear the form and errors
     setContent('');
     setCategory('');
@@ -102,9 +104,10 @@ const AddLikeScreen = () => {
   
       if (response.ok) {
         console.log('Data submitted successfully');
+        fetchPosts(username);
         router.push({ pathname: '/(user)/(feed)/index', params: { username } });
       } else {
-        console.error('Failed to submit data',response);
+        console.error('Failed to submit data', response);
       }
     } catch (error) {
       console.error('Error:', error);
@@ -115,7 +118,7 @@ const AddLikeScreen = () => {
 
   const fetchPosterPath = async (tconst) => {
     try {
-      const response = await fetch(`http://localhost:3000//poster/${tconst}`);
+      const response = await fetch(`http://localhost:3000/poster/${tconst}`);
       if (!response.ok) {
         throw new Error(`Server error: ${response.statusText}`);
       }
@@ -137,7 +140,7 @@ const AddLikeScreen = () => {
         const results = await searchMoviesInDatabase(db, text);
         setMovieResults(results.map(item => ({
           label: `${item.primaryTitle} (${item.startYear})`,
-          value: [item.tconst,item.primaryTitle,item.startYear] // Store tconst for fetching poster
+          value: [item.tconst, item.primaryTitle, item.startYear] // Store tconst for fetching poster
         })));
       } catch (error) {
         console.error('Error searching movies:', error);
@@ -181,7 +184,7 @@ const AddLikeScreen = () => {
               setCategory(value);
               setContent('');
               setTitle('');
-              setContentYear(null);
+              setContentYear('');
               setImageUri(null);
               setMovieResults([]); // Clear the movie results
               if (value) {
@@ -198,7 +201,7 @@ const AddLikeScreen = () => {
             textStyle={styles.dropdownText}
           />
         </View>
-  
+
         <TouchableWithoutFeedback onPress={closeDropdowns}>
           <View style={{ marginBottom: 16, zIndex: 1000 }}>
             <Text style={styles.label}>Content</Text>
@@ -217,10 +220,9 @@ const AddLikeScreen = () => {
               searchPlaceholder="Search..."
               onChangeSearchText={onContentChange}
               setValue={(callback) => {
-                const [value,title,contentYear] = callback();
+                const [value, title, contentYear] = callback();
                 setContent(value);
-                handleContentSelect(title);
-                setContentYear(contentYear); // Store the content year()
+                handleContentSelect([value, title, contentYear]);
                 setContentOpen(false); // Close the dropdown after selecting an item
                 if (callback) setErrors((prev) => ({ ...prev, content: false }));
               }}
@@ -233,8 +235,8 @@ const AddLikeScreen = () => {
               textStyle={styles.dropdownText}
               listMode="SCROLLVIEW"
               renderListItem={({ item }) => (
-                <TouchableOpacity 
-                  style={styles.listItem} 
+                <TouchableOpacity
+                  style={styles.listItem}
                   onPress={() => {
                     handleContentSelect(item.value);
                     setContentOpen(false); // Close the dropdown after selecting an item
@@ -248,16 +250,15 @@ const AddLikeScreen = () => {
             />
           </View>
         </TouchableWithoutFeedback>
-  
+
         {imageUri ? (
           <Image source={{ uri: imageUri }} style={styles.posterImage} />
         ) : (
-          // <TouchableOpacity style={styles.button} onPress={handleImagePick}>
-          <TouchableOpacity style={styles.button} >
+          <TouchableOpacity style={styles.button}>
             <Text style={styles.buttonText}>Pick an Image</Text>
           </TouchableOpacity>
         )}
-  
+
         <View style={styles.row}>
           <Text style={styles.label}>Rating</Text>
           <View style={[styles.ratingContainer, errors.rating && styles.errorBorder]}>
@@ -272,7 +273,7 @@ const AddLikeScreen = () => {
             />
           </View>
         </View>
-  
+
         <Text style={styles.label}>Review</Text>
         <TextInput
           style={[styles.input, styles.textArea, errors.review && styles.errorBorder]}
@@ -290,7 +291,6 @@ const AddLikeScreen = () => {
       </View>
     </TouchableWithoutFeedback>
   );
-  
 
   return (
     <FlatList

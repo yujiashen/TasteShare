@@ -1,7 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const { connectToMongoDB, createPost, getAllPosts, getPostById, updatePost, deletePost } = require('./database/mongoDb');
-const { connectToDatabase, searchMoviesInDatabase } = require('./database/db');
+const { connectToMongoDB, createPost, getFilteredPosts, getPostById, updatePost, deletePost } = require('./database/mongoDb');
+const { connectToDatabase, getUserFollowing, createRelationship, updateRelationshipType } = require('./database/db');
 const { fetchPosterPath } = require('./api/tmdbApi');
 
 const app = express();
@@ -32,7 +32,7 @@ app.post('/submit_post', async (req, res) => {
 
 app.get('/posts', async (req, res) => {
   try {
-    const posts = await getAllPosts();
+    const posts = await getFilteredPosts();
     res.status(200).json(posts);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -62,6 +62,49 @@ app.delete('/posts/:postId', async (req, res) => {
     await deletePost(req.params.postId);
     res.status(204).end();
   } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+
+app.get('/user/:username/followed_posts', async (req, res) => {
+  try {
+    // Step 1: Get the list of users the given username is following from PostgreSQL
+    const following = await getUserFollowing(req.params.username);
+
+    // Step 2: Fetch posts from MongoDB from the followed users (including the user's own posts)
+    const followedUsernames = following.map(user => user.target_username).concat(req.params.username);
+    const posts = await getFilteredPosts({ username: { $in: followedUsernames } });
+
+    res.status(200).json(posts);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// New endpoint to create a relationship
+app.post('/relationships', async (req, res) => {
+  const { username, targetUsername, relationshipType } = req.body;
+
+  try {
+    const relationship = await createRelationship(username, targetUsername, relationshipType);
+    res.status(201).json(relationship);
+  } catch (error) {
+    console.error('Error creating relationship:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// New endpoint to update relationship type
+app.put('/relationships/:relationshipId/type', async (req, res) => {
+  const { relationshipId } = req.params;
+  const { relationshipType } = req.body;
+
+  try {
+    const updatedRelationship = await updateRelationshipType(relationshipId, relationshipType);
+    res.status(200).json(updatedRelationship);
+  } catch (error) {
+    console.error('Error updating relationship type:', error);
     res.status(500).json({ error: error.message });
   }
 });

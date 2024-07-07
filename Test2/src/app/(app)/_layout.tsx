@@ -5,6 +5,8 @@ import { SplashScreen, Slot, Stack } from 'expo-router';
 import { useEffect } from 'react';
 import { useColorScheme } from 'react-native';
 import { AuthProvider } from '@/providers/AuthProvider';
+import { PostsProvider } from '@/providers/PostsProvider';
+
 
 SplashScreen.preventAutoHideAsync();
 
@@ -48,7 +50,9 @@ function RootLayoutNav() {
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <AuthProvider>
-        <Slot />
+        <PostsProvider>
+          <Slot />
+        </PostsProvider>
       </AuthProvider>
     </ThemeProvider>
   );

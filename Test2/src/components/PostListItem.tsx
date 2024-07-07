@@ -1,21 +1,32 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View, Image, Pressable, TouchableOpacity } from 'react-native';
-import Colors from '../constants/Colors';
-import { Post } from '../types';
 import { Link, useSegments, useRouter } from 'expo-router';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import LikeButton from '@/components/Buttons/LikeButton';
 import CommentButton from '@/components/Buttons/CommentButton';
 import ShareButton from '@/components/Buttons/ShareButton';
 import BookmarkButton from '@/components/Buttons/BookmarkButton';
 import CommentsModal from '@/components/Modals/CommentsModal';
 import PostOptionsModal from '@/components/Modals/PostOptionsModal';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 export const defaultPizzaImage =
   'https://notjustdev-dummy.s3.us-east-2.amazonaws.com/food/default.png';
 
 type PostListItemProps = {
-  post: Post;
+  post: {
+    postId: string;
+    username: string;
+    userProfileImage?: string;
+    imageUri: string;
+    likes?: string[];
+    review?: string;
+    comments?: {
+      id: string;
+      username: string;
+      text: string;
+      userProfileImage?: string;
+    }[];
+  };
 };
 
 const PostListItem = ({ post }: PostListItemProps) => {
@@ -41,6 +52,9 @@ const PostListItem = ({ post }: PostListItemProps) => {
     setOptionsModalVisible(true);
   };
 
+  const likes = post.likes || [];
+  const comments = post.comments || [];
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -56,10 +70,10 @@ const PostListItem = ({ post }: PostListItemProps) => {
         </TouchableOpacity>
       </View>
 
-      <Link href={`/${segments[0]}/feed/${post.id}`} asChild>
+      <Link href={`/${segments[0]}/feed/${post.postId}`} asChild>
         <Pressable>
           <Image
-            source={{ uri: post.image || defaultPizzaImage }}
+            source={{ uri: post.imageUri || defaultPizzaImage }}
             style={styles.image}
             resizeMode="cover"
           />
@@ -75,17 +89,17 @@ const PostListItem = ({ post }: PostListItemProps) => {
         <BookmarkButton />
       </View>
 
-      <Text style={styles.likes}>{post.likes.length || 0} likes</Text>
-      <Text style={styles.description}>{post.description}</Text>
+      <Text style={styles.likes}>{likes.length} likes</Text>
+      <Text style={styles.review}>{post.review}</Text>
 
       <Pressable onPress={handleComment}>
         <View>
-          {post.comments.length > 2 ? (
+          {comments.length > 2 ? (
             <Text style={styles.viewComments}>
-              View all {post.comments.length} comments
+              View all {comments.length} comments
             </Text>
           ) : null}
-          {post.comments.slice(0, 2).map((comment, index) => (
+          {comments.slice(0, 2).map((comment, index) => (
             <View key={index} style={styles.comment}>
               <Text style={styles.commentUsername}>{comment.username}</Text>
               <Text style={styles.commentText}> {comment.text}</Text>
@@ -97,14 +111,14 @@ const PostListItem = ({ post }: PostListItemProps) => {
       <CommentsModal
         visible={isCommentsModalVisible}
         onClose={() => setCommentsModalVisible(false)}
-        comments={post.comments.map(comment => ({
+        comments={comments.map(comment => ({
           id: comment.id,
           user: comment.username,
           comment: comment.text,
           userProfileImage: comment.userProfileImage || defaultPizzaImage,
         }))}
         username={post.username}
-        description={post.description}
+        review={post.review}
       />
 
       <PostOptionsModal
@@ -145,7 +159,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   username: {
-    color: Colors.light.tint,
+    color: 'black',
     fontWeight: 'bold',
     fontSize: 16,
   },
@@ -162,7 +176,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginVertical: 5,
   },
-  description: {
+  review: {
     marginVertical: 5,
   },
   viewComments: {

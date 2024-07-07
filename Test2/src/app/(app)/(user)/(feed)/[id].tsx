@@ -1,27 +1,26 @@
 import React, { useEffect } from 'react';
 import { FlatList, Text, View, StyleSheet } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
-import profiles from '@assets/data/profiles';
-import posts from '@assets/data/posts';
 import PostListItem from '@/components/PostListItem';
 import { useAuth } from '@/providers/AuthProvider';
+import { usePosts, PostsProvider } from '@/providers/PostsProvider';
 
 const UserFeedScreen = () => {
   const { username } = useLocalSearchParams();
   const { user: authUser } = useAuth(); 
-  const user = profiles.find(profile => profile.username === username);
+  const { posts, fetchPosts } = usePosts();
 
-  if (!user) {
+  useEffect(() => {
+    fetchPosts(username);
+  }, [username]);
+
+  if (posts.length === 0) {
     return (
       <View style={styles.container}>
-        <Text style={styles.errorText}>User not found</Text>
+        <Text style={styles.errorText}>No posts found</Text>
       </View>
     );
   }
-  const followingUsernames = user.following;
-
-  // Filter posts to include only those created by followed users
-  const userPosts = posts.filter(post => followingUsernames.includes(post.username));
 
   const renderHeader = () => (
     <View style={styles.headerContainer}>
@@ -31,11 +30,11 @@ const UserFeedScreen = () => {
 
   return (
     <FlatList
-      data={userPosts}
+      data={posts}
       renderItem={({ item }) => <PostListItem post={item} />}
-      keyExtractor={item => item.id}
+      keyExtractor={item => item.postId}
       contentContainerStyle={{ gap: 10, padding: 10 }}
-      ListHeaderComponent={renderHeader} // Add the header component here
+      ListHeaderComponent={renderHeader}
     />
   );
 };
@@ -60,4 +59,8 @@ const styles = StyleSheet.create({
   },
 });
 
-export default UserFeedScreen;
+export default () => (
+  <PostsProvider>
+    <UserFeedScreen />
+  </PostsProvider>
+);

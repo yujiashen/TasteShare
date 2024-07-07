@@ -21,7 +21,7 @@ const postSchema = new mongoose.Schema({
   category: String,
   content: String,
   timestamp: { type: Date, default: Date.now },
-  imagery: String,
+  imageUri: String,
   username: String,
   review: String,
   rating: Number,
@@ -40,6 +40,7 @@ const Post = mongoose.model('Post', postSchema);
 // Function to create a new post
 const createPost = async (postData) => {
   try {
+    console.log('In createPost',postData);
     const newPost = new Post(postData);
     await newPost.save();
     console.log('Post created:', newPost);
@@ -50,11 +51,11 @@ const createPost = async (postData) => {
   }
 };
 
-// Function to get all posts
-const getAllPosts = async () => {
+// Function to get posts based on filter criteria
+const getFilteredPosts = async (filter = {}) => {
   try {
-    const posts = await Post.find();
-    console.log('All posts:', posts);
+    const posts = await Post.find(filter);
+    console.log('Filtered posts:', posts);
     return posts;
   } catch (error) {
     console.error('Error getting posts:', error);
@@ -100,7 +101,7 @@ const deletePost = async (postId) => {
 module.exports = {
   connectToMongoDB,
   createPost,
-  getAllPosts,
+  getFilteredPosts,
   getPostById,
   updatePost,
   deletePost,

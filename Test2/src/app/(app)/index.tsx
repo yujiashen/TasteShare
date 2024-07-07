@@ -3,14 +3,15 @@ import { useNavigation } from '@react-navigation/native';
 import { useEffect, useState } from 'react';
 import { connectToDatabase, setupDatabaseTable, loadDataIntoDatabase } from '@database/dbConnect';
 import { AuthProvider } from '@/providers/AuthProvider'; 
+import { PostsProvider } from '@/providers/PostsProvider'; 
 
 
 function Index() {
   const router = useRouter();
   const navigation = useNavigation();
   const tableName = 'moviesShows';
-  const dataFilePath = 'assets/data/movies_shows_top50k.json';
-  const [db, setDb] = useState(null);
+  // const dataFilePath = 'assets/data/movies_shows_top50k.json';
+  // const [db, setDb] = useState(null);
 
   useEffect(() => {
     // REROUTED
@@ -39,30 +40,14 @@ function Index() {
 
     connectAndSetupDatabase();
   }, [router, navigation]);
-
-  //   // Load data into the database after successful setup
-  //   const loadDataIntoDatabaseInBackground = async () => {
-  //     if (db) {
-  //       await loadDataIntoDatabase(db, tableName, dataFilePath);
-  //       setLoading(false);
-  //     }
-  //   };
-  //   if (db) {
-  //     loadDataIntoDatabaseInBackground();
-  //   }
-  // }, [router, navigation, db]);
-
-  // if (loading) {
-  //   return null;
-  // }
-
-  // return <Text>Loading...</Text>;
 }
 
 export default function App() {
   return (
     <AuthProvider>
+      <PostsProvider>
         <Index />
+      </PostsProvider>
     </AuthProvider>
   );
 }
